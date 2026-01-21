@@ -5,6 +5,14 @@
 <title>Travel Mate</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- EMAILJS -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+(function(){
+  emailjs.init("YOUR_PUBLIC_KEY"); /* 🔴 replace */
+})();
+</script>
+
 <style>
 *{box-sizing:border-box;font-family:Segoe UI}
 body{background:#f4f6f8;margin:0}
@@ -54,12 +62,12 @@ footer{background:#002b5b;color:white;text-align:center;padding:15px}
 
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN PAGE -->
 <div id="loginPage" class="login-box">
   <h2>Email Login</h2>
 
   <div id="emailStep">
-    <input type="email" id="email" placeholder="Enter Email ID" required>
+    <input type="email" id="email" placeholder="Enter Email ID">
     <button onclick="sendOTP()">Send OTP</button>
     <p class="success" id="info"></p>
   </div>
@@ -76,9 +84,9 @@ footer{background:#002b5b;color:white;text-align:center;padding:15px}
   <nav>
     <h2>Travel Mate</h2>
     <div>
-      <a href="#packages">Packages</a>
-      <a href="#reviews">Reviews</a>
-      <a href="#booking">Booking</a>
+      <a href="#">Packages</a>
+      <a href="#">Reviews</a>
+      <a href="#">Booking</a>
       <a class="logout" onclick="logout()">Logout</a>
     </div>
   </nav>
@@ -102,7 +110,7 @@ footer{background:#002b5b;color:white;text-align:center;padding:15px}
 </div>
 
 <script>
-/* ON LOAD */
+/* AUTO LOGIN */
 if(localStorage.getItem("loggedin")){
   showHome();
 }
@@ -110,18 +118,28 @@ if(localStorage.getItem("loggedin")){
 /* SEND OTP */
 function sendOTP(){
   const email = document.getElementById("email").value;
-  if(!email) return;
+  if(!email) return alert("Email enter pannunga");
 
   const otp = Math.floor(100000 + Math.random() * 900000);
 
   localStorage.setItem("otp", otp);
   localStorage.setItem("email", email);
 
-  document.getElementById("info").innerText =
-    "OTP sent successfully (Demo OTP: " + otp + ")";
-
-  document.getElementById("emailStep").style.display = "none";
-  document.getElementById("otpStep").style.display = "block";
+  emailjs.send(
+    "YOUR_SERVICE_ID",      /* 🔴 replace */
+    "YOUR_TEMPLATE_ID",     /* 🔴 replace */
+    {
+      to_email: email,
+      otp: otp
+    }
+  ).then(function(){
+      document.getElementById("info").innerText =
+        "OTP sent to your email 📧";
+      document.getElementById("emailStep").style.display="none";
+      document.getElementById("otpStep").style.display="block";
+  }, function(){
+      alert("Email send failed!");
+  });
 }
 
 /* VERIFY OTP */
@@ -139,8 +157,8 @@ function verifyOTP(){
 
 /* SHOW HOME */
 function showHome(){
-  document.getElementById("loginPage").style.display = "none";
-  document.getElementById("homePage").style.display = "block";
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("homePage").style.display="block";
   document.getElementById("userEmail").innerText =
     localStorage.getItem("email");
 }
@@ -154,3 +172,4 @@ function logout(){
 
 </body>
 </html>
+
