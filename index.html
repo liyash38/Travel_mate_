@@ -1,47 +1,3 @@
-<?php
-session_start();
-
-/* ==================== SEND OTP ==================== */
-if(isset($_GET['send_otp']) && !empty($_GET['email'])){
-    $email = $_GET['email'];
-    $otp = rand(100000, 999999); // 6-digit OTP
-
-    $_SESSION['otp'] = $otp;
-    $_SESSION['email'] = $email;
-    $_SESSION['otp_time'] = time(); // for optional expiry
-
-    // Demo: show OTP on screen
-    $info = "OTP sent successfully (Demo OTP: $otp)";
-}
-
-/* ==================== VERIFY OTP ==================== */
-if(isset($_GET['verify_otp']) && !empty($_GET['otp'])){
-    $entered_otp = $_GET['otp'];
-
-    if(isset($_SESSION['otp'])){
-        // Optional: OTP expires in 5 minutes (300 seconds)
-        if(time() - $_SESSION['otp_time'] > 300){
-            $error = "OTP expired! Please request again.";
-            unset($_SESSION['otp']);
-        } else if($entered_otp == $_SESSION['otp']){
-            $_SESSION['loggedin'] = true;
-            unset($_SESSION['otp']); // remove OTP after success
-        } else {
-            $error = "Invalid OTP!";
-        }
-    } else {
-        $error = "Please request OTP first!";
-    }
-}
-
-/* ==================== LOGOUT ==================== */
-if(isset($_GET['logout'])){
-    session_destroy();
-    header("Location:index.php");
-    exit;
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,7 +33,7 @@ button{
 .success{color:green}
 .error{color:red}
 
-/* WEBSITE VIEW */
+/* WEBSITE */
 nav{
  background:#002b5b;color:white;
  display:flex;justify-content:space-between;
@@ -92,70 +48,109 @@ nav a{color:white;margin-left:20px;text-decoration:none}
 }
 .container{max-width:1100px;margin:auto;padding:40px}
 footer{background:#002b5b;color:white;text-align:center;padding:15px}
-.logout{background:red;padding:6px 12px}
+.logout{background:red;padding:6px 12px;cursor:pointer}
 </style>
 </head>
+
 <body>
 
-<?php if(!isset($_SESSION['loggedin'])){ ?>
+<!-- LOGIN -->
+<div id="loginPage" class="login-box">
+  <h2>Email Login</h2>
 
-<!-- ================= LOGIN PAGE ================= -->
-<div class="login-box">
-<h2>Email Login</h2>
+  <div id="emailStep">
+    <input type="email" id="email" placeholder="Enter Email ID" required>
+    <button onclick="sendOTP()">Send OTP</button>
+    <p class="success" id="info"></p>
+  </div>
 
-<?php if(!isset($_SESSION['otp'])){ ?>
-<form method="get">
-<input type="email" name="email" placeholder="Enter Email ID" required>
-<button type="submit" name="send_otp" value="1">Send OTP</button>
-</form>
-<p class="success"><?php if(isset($info)) echo $info; ?></p>
-
-<?php } else { ?>
-<form method="get">
-<input type="number" name="otp" placeholder="Enter OTP" required>
-<button type="submit" name="verify_otp" value="1">Verify OTP</button>
-</form>
-<p class="error"><?php if(isset($error)) echo $error; ?></p>
-<p><a href="index.php">Resend OTP</a></p>
-<?php } ?>
-
+  <div id="otpStep" style="display:none;">
+    <input type="number" id="otp" placeholder="Enter OTP">
+    <button onclick="verifyOTP()">Verify OTP</button>
+    <p class="error" id="error"></p>
+  </div>
 </div>
 
-<?php } else { ?>
+<!-- HOME PAGE -->
+<div id="homePage" style="display:none;">
+  <nav>
+    <h2>Travel Mate</h2>
+    <div>
+      <a href="#packages">Packages</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#booking">Booking</a>
+      <a class="logout" onclick="logout()">Logout</a>
+    </div>
+  </nav>
 
-<!-- ================= HOME PAGE ================= -->
-<nav>
-<h2>Travel Mate</h2>
-<div>
-<a href="#packages">Packages</a>
-<a href="#reviews">Reviews</a>
-<a href="#booking">Booking</a>
-<a href="?logout=true" class="logout">Logout</a>
+  <div class="hero">
+    <div>
+      <h1 style="color:#250430">Explore the World with Us</h1>
+      <p style="color: rgb(41, 2, 29)">India's Trusted Holiday Partner</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Welcome 🎉</h2>
+    <p>Email ID: <span id="userEmail"></span></p>
+    <p>OTP verified login successful.</p>
+  </div>
+
+  <footer>
+    <p>© 2026 Travel Mate | Big Project</p>
+  </footer>
 </div>
-</nav>
 
-<div class="hero">
-<div>
-<h1 style="color:#250430">Explore the World with Us</h1>
-<p style="color: rgb(41, 2, 29)">India's Trusted Holiday Partner</p>
-</div>
-</div>
+<script>
+/* ON LOAD */
+if(localStorage.getItem("loggedin")){
+  showHome();
+}
 
-<div class="container">
-<h2>Welcome 🎉</h2>
-<p>Email ID: <?php echo $_SESSION['email']; ?></p>
-<p>OTP verified login successful.</p>
+/* SEND OTP */
+function sendOTP(){
+  const email = document.getElementById("email").value;
+  if(!email) return;
 
-<!-- Example: Add Review Button -->
-<p><a href="#reviews" style="background:#002b5b;color:white;padding:8px 15px;border-radius:5px;text-decoration:none;">My Review</a></p>
+  const otp = Math.floor(100000 + Math.random() * 900000);
 
-</div>
+  localStorage.setItem("otp", otp);
+  localStorage.setItem("email", email);
 
-<footer>
-<p>© 2026 Travel Mate | Big Project</p>
-</footer>
+  document.getElementById("info").innerText =
+    "OTP sent successfully (Demo OTP: " + otp + ")";
 
-<?php } ?>
+  document.getElementById("emailStep").style.display = "none";
+  document.getElementById("otpStep").style.display = "block";
+}
+
+/* VERIFY OTP */
+function verifyOTP(){
+  const userOtp = document.getElementById("otp").value;
+  const realOtp = localStorage.getItem("otp");
+
+  if(userOtp === realOtp){
+    localStorage.setItem("loggedin", true);
+    showHome();
+  }else{
+    document.getElementById("error").innerText = "Invalid OTP!";
+  }
+}
+
+/* SHOW HOME */
+function showHome(){
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("homePage").style.display = "block";
+  document.getElementById("userEmail").innerText =
+    localStorage.getItem("email");
+}
+
+/* LOGOUT */
+function logout(){
+  localStorage.clear();
+  location.reload();
+}
+</script>
 
 </body>
 </html>
