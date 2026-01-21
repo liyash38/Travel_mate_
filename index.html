@@ -1,25 +1,25 @@
 <?php
 session_start();
 
-/* STEP 1: GENERATE OTP */
-if(isset($_GET['send_otp'])){
+/* ==================== SEND OTP ==================== */
+if(isset($_GET['send_otp']) && !empty($_GET['email'])){
     $email = $_GET['email'];
-    $otp = rand(100000,999999); // 6 digit OTP
+    $otp = rand(100000, 999999); // 6-digit OTP
 
     $_SESSION['otp'] = $otp;
     $_SESSION['email'] = $email;
-    $_SESSION['otp_time'] = time(); // store OTP time for expiry (optional)
+    $_SESSION['otp_time'] = time(); // for optional expiry
 
     // Demo: show OTP on screen
     $info = "OTP sent successfully (Demo OTP: $otp)";
 }
 
-/* STEP 2: VERIFY OTP */
-if(isset($_GET['verify_otp'])){
+/* ==================== VERIFY OTP ==================== */
+if(isset($_GET['verify_otp']) && !empty($_GET['otp'])){
     $entered_otp = $_GET['otp'];
 
     if(isset($_SESSION['otp'])){
-        // Optional: OTP expiry 5 min = 300 seconds
+        // Optional: OTP expires in 5 minutes (300 seconds)
         if(time() - $_SESSION['otp_time'] > 300){
             $error = "OTP expired! Please request again.";
             unset($_SESSION['otp']);
@@ -34,7 +34,7 @@ if(isset($_GET['verify_otp'])){
     }
 }
 
-/* LOGOUT */
+/* ==================== LOGOUT ==================== */
 if(isset($_GET['logout'])){
     session_destroy();
     header("Location:index.php");
@@ -95,7 +95,6 @@ footer{background:#002b5b;color:white;text-align:center;padding:15px}
 .logout{background:red;padding:6px 12px}
 </style>
 </head>
-
 <body>
 
 <?php if(!isset($_SESSION['loggedin'])){ ?>
@@ -107,14 +106,14 @@ footer{background:#002b5b;color:white;text-align:center;padding:15px}
 <?php if(!isset($_SESSION['otp'])){ ?>
 <form method="get">
 <input type="email" name="email" placeholder="Enter Email ID" required>
-<button name="send_otp">Send OTP</button>
+<button type="submit" name="send_otp" value="1">Send OTP</button>
 </form>
 <p class="success"><?php if(isset($info)) echo $info; ?></p>
 
 <?php } else { ?>
 <form method="get">
 <input type="number" name="otp" placeholder="Enter OTP" required>
-<button name="verify_otp">Verify OTP</button>
+<button type="submit" name="verify_otp" value="1">Verify OTP</button>
 </form>
 <p class="error"><?php if(isset($error)) echo $error; ?></p>
 <p><a href="index.php">Resend OTP</a></p>
@@ -146,6 +145,10 @@ footer{background:#002b5b;color:white;text-align:center;padding:15px}
 <h2>Welcome 🎉</h2>
 <p>Email ID: <?php echo $_SESSION['email']; ?></p>
 <p>OTP verified login successful.</p>
+
+<!-- Example: Add Review Button -->
+<p><a href="#reviews" style="background:#002b5b;color:white;padding:8px 15px;border-radius:5px;text-decoration:none;">My Review</a></p>
+
 </div>
 
 <footer>
