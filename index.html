@@ -2,23 +2,35 @@
 session_start();
 
 /* STEP 1: GENERATE OTP */
-if(isset($_POST['send_otp'])){
-    $email = $_POST['email'];
+if(isset($_GET['send_otp'])){
+    $email = $_GET['email'];
     $otp = rand(100000,999999); // 6 digit OTP
 
     $_SESSION['otp'] = $otp;
     $_SESSION['email'] = $email;
+    $_SESSION['otp_time'] = time(); // store OTP time for expiry (optional)
 
-    // REAL PROJECT la mail() use pannuvaanga
+    // Demo: show OTP on screen
     $info = "OTP sent successfully (Demo OTP: $otp)";
 }
 
 /* STEP 2: VERIFY OTP */
-if(isset($_POST['verify_otp'])){
-    if($_POST['otp'] == $_SESSION['otp']){
-        $_SESSION['loggedin'] = true;
+if(isset($_GET['verify_otp'])){
+    $entered_otp = $_GET['otp'];
+
+    if(isset($_SESSION['otp'])){
+        // Optional: OTP expiry 5 min = 300 seconds
+        if(time() - $_SESSION['otp_time'] > 300){
+            $error = "OTP expired! Please request again.";
+            unset($_SESSION['otp']);
+        } else if($entered_otp == $_SESSION['otp']){
+            $_SESSION['loggedin'] = true;
+            unset($_SESSION['otp']); // remove OTP after success
+        } else {
+            $error = "Invalid OTP!";
+        }
     } else {
-        $error = "Invalid OTP!";
+        $error = "Please request OTP first!";
     }
 }
 
@@ -26,6 +38,7 @@ if(isset($_POST['verify_otp'])){
 if(isset($_GET['logout'])){
     session_destroy();
     header("Location:index.php");
+    exit;
 }
 ?>
 
@@ -64,7 +77,7 @@ button{
 .success{color:green}
 .error{color:red}
 
-/* WEBSITE (YOUR CODE SIMPLIFIED VIEW) */
+/* WEBSITE VIEW */
 nav{
  background:#002b5b;color:white;
  display:flex;justify-content:space-between;
@@ -73,8 +86,7 @@ nav{
 nav h2{color:#ffcc00}
 nav a{color:white;margin-left:20px;text-decoration:none}
 .hero{
- 
-    background:url("background.jpg") center/cover;
+ background:url("background.jpg") center/cover;
  height:80vh;display:flex;align-items:center;justify-content:center;
  color:white;text-align:center;
 }
@@ -100,20 +112,19 @@ footer{background:#002b5b;color:white;text-align:center;padding:15px}
 <p class="success"><?php if(isset($info)) echo $info; ?></p>
 
 <?php } else { ?>
-
 <form method="get">
 <input type="number" name="otp" placeholder="Enter OTP" required>
 <button name="verify_otp">Verify OTP</button>
 </form>
 <p class="error"><?php if(isset($error)) echo $error; ?></p>
-
+<p><a href="index.php">Resend OTP</a></p>
 <?php } ?>
+
 </div>
 
 <?php } else { ?>
 
-<!-- ================= HOME PAGE (YOUR WEBSITE) ================= -->
-
+<!-- ================= HOME PAGE ================= -->
 <nav>
 <h2>Travel Mate</h2>
 <div>
