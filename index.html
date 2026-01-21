@@ -93,7 +93,7 @@ footer{background:#002b5b;color:white;text-align:center;padding:15px}
 <h2>Email Login</h2>
 
 <?php if(!isset($_SESSION['otp'])){ ?>
-<form method="post">
+<form method="get">
 <input type="email" name="email" placeholder="Enter Email ID" required>
 <button name="send_otp">Send OTP</button>
 </form>
