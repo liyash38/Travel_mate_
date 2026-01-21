@@ -1,175 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Travel Mate</title>
+<title>Mobile OTP Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- EMAILJS -->
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script>
-(function(){
-  emailjs.init("YOUR_PUBLIC_KEY"); /* 🔴 replace */
-})();
-</script>
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <style>
-*{box-sizing:border-box;font-family:Segoe UI}
-body{background:#f4f6f8;margin:0}
-
-/* LOGIN PAGE */
-.login-box{
- width:350px;
- background:white;
- padding:25px;
- margin:120px auto;
- border-radius:12px;
- box-shadow:0 10px 25px rgba(0,0,0,.2);
- text-align:center;
+body{font-family:Segoe UI;background:#f4f6f8}
+.box{
+ width:320px;background:#fff;padding:25px;
+ margin:120px auto;border-radius:10px;
+ box-shadow:0 10px 20px rgba(0,0,0,.2);
+ text-align:center
 }
-input,button{
- width:100%;
- padding:10px;
- margin:10px 0;
-}
-button{
- background:#002b5b;
- color:white;
- border:none;
- cursor:pointer;
-}
-.success{color:green}
-.error{color:red}
-
-/* WEBSITE */
-nav{
- background:#002b5b;color:white;
- display:flex;justify-content:space-between;
- padding:15px 30px;
-}
-nav h2{color:#ffcc00}
-nav a{color:white;margin-left:20px;text-decoration:none}
-.hero{
- background:url("background.jpg") center/cover;
- height:80vh;display:flex;align-items:center;justify-content:center;
- color:white;text-align:center;
-}
-.container{max-width:1100px;margin:auto;padding:40px}
-footer{background:#002b5b;color:white;text-align:center;padding:15px}
-.logout{background:red;padding:6px 12px;cursor:pointer}
+input,button{width:100%;padding:10px;margin:10px 0}
+button{background:#002b5b;color:white;border:none}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="login-box">
-  <h2>Email Login</h2>
-
-  <div id="emailStep">
-    <input type="email" id="email" placeholder="Enter Email ID">
-    <button onclick="sendOTP()">Send OTP</button>
-    <p class="success" id="info"></p>
-  </div>
-
-  <div id="otpStep" style="display:none;">
-    <input type="number" id="otp" placeholder="Enter OTP">
-    <button onclick="verifyOTP()">Verify OTP</button>
-    <p class="error" id="error"></p>
-  </div>
+<div class="box" id="login">
+  <h2>Mobile Login</h2>
+  <input type="text" id="phone" placeholder="+91XXXXXXXXXX">
+  <div id="recaptcha-container"></div>
+  <button onclick="sendOTP()">Send OTP</button>
 </div>
 
-<!-- HOME PAGE -->
-<div id="homePage" style="display:none;">
-  <nav>
-    <h2>Travel Mate</h2>
-    <div>
-      <a href="#">Packages</a>
-      <a href="#">Reviews</a>
-      <a href="#">Booking</a>
-      <a class="logout" onclick="logout()">Logout</a>
-    </div>
-  </nav>
+<div class="box" id="otpBox" style="display:none;">
+  <h2>Enter OTP</h2>
+  <input type="number" id="otp">
+  <button onclick="verifyOTP()">Verify</button>
+</div>
 
-  <div class="hero">
-    <div>
-      <h1 style="color:#250430">Explore the World with Us</h1>
-      <p style="color: rgb(41, 2, 29)">India's Trusted Holiday Partner</p>
-    </div>
-  </div>
-
-  <div class="container">
-    <h2>Welcome 🎉</h2>
-    <p>Email ID: <span id="userEmail"></span></p>
-    <p>OTP verified login successful.</p>
-  </div>
-
-  <footer>
-    <p>© 2026 Travel Mate | Big Project</p>
-  </footer>
+<div class="box" id="home" style="display:none;">
+  <h2>Welcome 🎉</h2>
+  <p>Mobile OTP login success</p>
+  <button onclick="logout()">Logout</button>
 </div>
 
 <script>
-/* AUTO LOGIN */
-if(localStorage.getItem("loggedin")){
-  showHome();
-}
+// 🔴 PASTE YOUR FIREBASE CONFIG HERE
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
+  'recaptcha-container',
+  { size: 'normal' }
+);
 
 /* SEND OTP */
 function sendOTP(){
-  const email = document.getElementById("email").value;
-  if(!email) return alert("Email enter pannunga");
-
-  const otp = Math.floor(100000 + Math.random() * 900000);
-
-  localStorage.setItem("otp", otp);
-  localStorage.setItem("email", email);
-
-  emailjs.send(
-    "YOUR_SERVICE_ID",      /* 🔴 replace */
-    "YOUR_TEMPLATE_ID",     /* 🔴 replace */
-    {
-      to_email: email,
-      otp: otp
-    }
-  ).then(function(){
-      document.getElementById("info").innerText =
-        "OTP sent to your email 📧";
-      document.getElementById("emailStep").style.display="none";
-      document.getElementById("otpStep").style.display="block";
-  }, function(){
-      alert("Email send failed!");
-  });
+  const phone = document.getElementById("phone").value;
+  auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
+  .then(function(result){
+    window.confirmationResult = result;
+    document.getElementById("login").style.display="none";
+    document.getElementById("otpBox").style.display="block";
+  }).catch(alert);
 }
 
 /* VERIFY OTP */
 function verifyOTP(){
-  const userOtp = document.getElementById("otp").value;
-  const realOtp = localStorage.getItem("otp");
-
-  if(userOtp === realOtp){
-    localStorage.setItem("loggedin", true);
-    showHome();
-  }else{
-    document.getElementById("error").innerText = "Invalid OTP!";
-  }
-}
-
-/* SHOW HOME */
-function showHome(){
-  document.getElementById("loginPage").style.display="none";
-  document.getElementById("homePage").style.display="block";
-  document.getElementById("userEmail").innerText =
-    localStorage.getItem("email");
+  const code = document.getElementById("otp").value;
+  confirmationResult.confirm(code).then(function(){
+    document.getElementById("otpBox").style.display="none";
+    document.getElementById("home").style.display="block";
+  }).catch(()=>alert("Invalid OTP"));
 }
 
 /* LOGOUT */
 function logout(){
-  localStorage.clear();
+  auth.signOut();
   location.reload();
 }
 </script>
 
 </body>
 </html>
-
